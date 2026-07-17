@@ -1,0 +1,38 @@
+A project's shape grows in three recognizable stages. You are at Stage 1 right now.
+
+STAGE 1 — one folder (every lab in this course so far)
+----------------------------------------------------------
+lab/
+├── providers.tf     <- terraform {} + provider blocks
+├── variables.tf      <- inputs
+├── locals.tf          <- computed values
+├── main.tf             <- resources
+└── outputs.tf           <- return values
+
+STAGE 2 — one folder, but the resources are reusable (Day 9: Modules)
+----------------------------------------------------------------------
+modules/
+└── vpc/
+    ├── main.tf          <- the SAME resource blocks, generalized with variables
+    ├── variables.tf      <- now the module's public "API" (its inputs)
+    └── outputs.tf         <- now the module's public "API" (its return values)
+
+STAGE 3 — modules called from separate, independently-deployed environments (the capstone)
+--------------------------------------------------------------------------------------------
+modules/
+└── vpc/
+    └── ...                 <- unchanged from Stage 2
+
+environments/
+├── dev/
+│   ├── main.tf              <- module "vpc" { source = "../../modules/vpc"; cidr = "10.0.0.0/16" }
+│   └── backend.tf            <- its OWN remote state (Day 9), isolated from qa/prod
+├── qa/
+│   ├── main.tf                 <- module "vpc" { source = "../../modules/vpc"; cidr = "10.1.0.0/16" }
+│   └── backend.tf
+└── prod/
+    ├── main.tf                    <- module "vpc" { source = "../../modules/vpc"; cidr = "10.2.0.0/16" }
+    └── backend.tf
+
+Notice: the module's CODE never changes between stages 2 and 3 — only how many times it's
+called, and with what inputs, changes. That reusability is the entire point of Day 9.
