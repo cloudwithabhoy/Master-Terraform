@@ -112,7 +112,7 @@ output "alert_webhook_url" {
 }
 ```
 
-Outputs are how a config "returns" values — to you at the terminal, to a script, or (later, Day 9)
+Outputs are how a config "returns" values — to you at the terminal, to a script, or (later, Day 8)
 to another Terraform config via `terraform_remote_state`. `sensitive = true` on an output works
 the same way as on a variable: hidden by default, visible if asked for by name.
 

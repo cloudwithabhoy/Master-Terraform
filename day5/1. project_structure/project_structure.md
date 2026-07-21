@@ -63,7 +63,7 @@ independently-deployed unit. The two patterns you'll meet later in this course:
 
 ```
 project/
-├── modules/              ← reusable building blocks (Day 9)
+├── modules/              ← reusable building blocks (Day 8)
 │   ├── vpc/
 │   └── compute/
 └── environments/          ← one deployable root config per environment (the capstone)
@@ -74,12 +74,13 @@ project/
 
 - **`modules/`** — code you write once and call multiple times with different inputs (a VPC
   shape, a compute tier). Not deployed directly.
-- **`environments/`** (or workspaces — Day 11 covers the trade-off) — the actual root
-  configurations that call those modules with environment-specific values, each with its **own**
-  state file, so a mistake in `dev` can never touch `prod`.
+- **`environments/`** (or workspaces — a separate mechanism for the same problem, not covered in
+  depth in this course) — the actual root configurations that call those modules with
+  environment-specific values, each with its **own** state file, so a mistake in `dev` can never
+  touch `prod`.
 
-You aren't building this yet — Day 9 (modules) and the capstone (environments) get there — but
-recognizing the shape now means Day 9 won't feel like a new idea, just a name for something
+You aren't building this yet — Day 8 (modules) and the capstone (environments) get there — but
+recognizing the shape now means Day 8 won't feel like a new idea, just a name for something
 you've already anticipated.
 
 ---

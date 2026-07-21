@@ -67,7 +67,7 @@ That's the whole pattern — the same `depends_on = [...]` line works on any res
    `depends_on`, scoped as narrowly as possible (prefer one resource over a whole module).
 3. **Reaching for `depends_on` a lot** is often a sign the configuration's resources are more
    tangled than they should be — a good moment to reconsider whether they belong in separate
-   modules with a real interface between them (Day 9).
+   modules with a real interface between them (Day 8).
 
 ---
 
@@ -80,7 +80,7 @@ and safe to `apply`/`destroy` on its own.
 > **Good to know, not needed today:** `depends_on = [...]` also works on a whole `module` block
 > (waits for every resource inside it) and on a `data` source (delays reading it until after a
 > resource is created). Same idea, same syntax — you'll meet these forms naturally once you reach
-> modules (Day 9).
+> modules (Day 8).
 
 ---
 

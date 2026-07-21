@@ -5,7 +5,7 @@ with a single **VPC module** (`modules/vpc/`) called once and deployed to two di
 environments via real `.tfvars` files (Topic 2). The module's code never changes between
 environments — only the CIDR block (and other inputs) you pass via `-var-file` do.
 
-> **A quick heads-up:** this lab previews an idea this course doesn't formally teach until Day 9
+> **A quick heads-up:** this lab previews an idea this course doesn't formally teach until Day 8
 > — **modules**. You don't need to understand every line of `modules/vpc/main.tf` yet; treat it
 > as "a small reusable network," and focus on what Topics 1-2 are actually about: the module's
 > inputs changing per environment via `.tfvars`.

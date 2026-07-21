@@ -170,7 +170,7 @@ Billed on four independent axes — forgetting one is the usual source of a surp
   `s3://bucket/year=2026/month=07/`), queried in place by Athena/Redshift Spectrum without ever
   loading it into a database.
 - **Backup/DR target** — versioned + replicated + lifecycle-managed for cost.
-- **Terraform's own remote state backend** — you'll build this yourself on Day 9.
+- **Terraform's own remote state backend** — you'll build this yourself on Day 8.
 - **Event-driven pipelines** — S3 event notifications trigger a Lambda function the moment an
   object is uploaded (e.g. auto-generate a thumbnail, kick off a processing job).
 
