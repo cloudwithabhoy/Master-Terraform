@@ -77,6 +77,9 @@ import {
 This file sits in the **same folder** as `main.tf` — Terraform loads both together. You're adding
 one resource to an already-real config, not starting fresh.
 
+`import.tf` should hold **only** this `import` block — nothing else. It's throwaway scaffolding
+for a one-time migration, not a permanent home for the resource itself (see Step 6).
+
 ---
 
 ## Step 4 — Generate the matching resource block
@@ -93,10 +96,12 @@ generated code is a strong starting point, not guaranteed perfect.
 
 ---
 
-## Step 5 — Move the generated code in, then apply
+## Step 5 — Move the generated code into `main.tf`, then apply
 
-Move (or merge) `generated.tf`'s content into `import.tf`, in place of the "don't write
-this by hand" comment. Then:
+Move (or merge) `generated.tf`'s content into `main.tf`, right alongside `aws_s3_bucket.app_logs`
+— **not** into `import.tf`. `main.tf` is where your permanently-managed resources live; `import.tf`
+stays a single-purpose, disposable file holding just the `import` block (Step 6 is why this split
+matters). Then:
 
 ```bash
 terraform plan
@@ -113,10 +118,21 @@ state file.
 
 ---
 
-## Step 6 — Remove the `import` block
+## Step 6 — Delete `import.tf` entirely
 
 The `import` block only needs to exist for one `apply` — it's a one-time migration instruction,
-not a permanent part of your configuration. Delete it now that the instance is imported.
+not a permanent part of your configuration. Because `import.tf` never held anything else (Step 3),
+you can delete the **whole file** now that the instance is imported, instead of editing it down:
+
+```bash
+rm import.tf
+```
+
+This is also how it tends to work on a real team: the import PR gets merged and applied, then a
+follow-up commit (sometimes its own PR, so the history clearly shows "imported X" separately from
+"cleaned up the now-unneeded import instruction") deletes the throwaway import file. The
+`resource` block stays put in `main.tf` — nothing is lost, since it was never in `import.tf` to
+begin with.
 
 ```bash
 terraform plan
