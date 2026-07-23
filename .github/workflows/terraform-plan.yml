@@ -81,10 +81,14 @@ jobs:
       # -no-color → plain text, so it pastes cleanly into a PR comment
       # continue-on-error → don't stop the job if plan fails; Step 7 still
       #   posts the error as a comment, Step 8 fails the job afterward
+      # owner_tag has no default (Day 5's tagging convention) and dev.tfvars
+      # is gitignored — it never exists on this runner. Supplied here via a
+      # repository Variable (not a secret — not sensitive) instead: Settings
+      # -> Secrets and variables -> Actions -> Variables -> OWNER_TAG.
       - name: Terraform Plan
         id: plan
         working-directory: ${{ env.TF_DIR }}
-        run: terraform plan -input=false -no-color
+        run: terraform plan -input=false -no-color -var="owner_tag=${{ vars.OWNER_TAG }}"
         continue-on-error: true
 
       # --- Step 7: this is what makes it a REVIEW tool, not a black box ---

@@ -56,6 +56,8 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: terraform init -input=false
 
+      # Same OWNER_TAG repository Variable as terraform-plan.yml — see that
+      # file's comment for why this can't come from dev.tfvars in CI.
       - name: Terraform Apply
         working-directory: ${{ env.TF_DIR }}
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve -var="owner_tag=${{ vars.OWNER_TAG }}"
