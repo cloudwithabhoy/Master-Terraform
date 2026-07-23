@@ -1,0 +1,102 @@
+# =============================================================================
+# k8s-deploy.yml  —  Applies final-project/k8s/'s manifests against dev's EKS
+# cluster. Deliberately INDEPENDENT of terraform-plan.yml/terraform-apply.yml
+# — see final-project/PROJECT.md's "Architecture decisions" (the real-world
+# Terraform/app split): Terraform owns the cluster/node group/IRSA/ALB
+# controller, this workflow owns the app's Deployments/Services/Ingress.
+#
+# dev-only for now — qa/main get added once those environments exist, same
+# scope as terraform-plan.yml/terraform-apply.yml today.
+#
+# Practical consequence of the split: this workflow doesn't wait on
+# terraform-apply.yml to finish. The very FIRST deploy to a brand-new
+# environment needs the EKS cluster to already exist — if this run fails
+# because the cluster isn't there yet, that's the fix (run terraform-apply.yml
+# first), not a bug in this file.
+# =============================================================================
+
+name: K8s Deploy
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "final-project/k8s/**"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Same GitHub Environment as terraform-apply.yml's dev job — no
+    # required-reviewer rule on "dev" (auto-applies); qa/prod will each need
+    # one, gating this workflow exactly the same way as the Terraform one.
+    environment: dev
+    defaults:
+      run:
+        shell: bash
+    env:
+      TF_DIR: final-project/environments/dev
+      K8S_DIR: final-project/k8s
+      AWS_REGION: us-east-1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Reads (never writes) environments/dev's state — just enough to pull
+      # the values Terraform generated that final-project/k8s/'s ${...}
+      # placeholders need (see final-project/k8s/README.md).
+      - name: Terraform Init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Read Terraform outputs
+        id: tf_outputs
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          echo "cluster_name=$(terraform output -raw eks_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "frontend_ecr_url=$(terraform output -raw ecr_frontend_repository_url)" >> "$GITHUB_OUTPUT"
+          echo "backend_ecr_url=$(terraform output -raw ecr_backend_repository_url)" >> "$GITHUB_OUTPUT"
+          echo "backend_irsa_role_arn=$(terraform output -raw backend_irsa_role_arn)" >> "$GITHUB_OUTPUT"
+          echo "db_secret_name=$(terraform output -raw db_secret_id)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.31.0"
+
+      - name: Configure kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name "${{ steps.tf_outputs.outputs.cluster_name }}" \
+            --region "${{ env.AWS_REGION }}"
+
+      # Fills in final-project/k8s/'s ${...} placeholders with the values
+      # read above — see final-project/k8s/README.md's placeholder table.
+      # `envsubst` reads from the process environment, so AWS_REGION (set at
+      # job level above) is already visible here without redeclaring it.
+      - name: Render manifests
+        env:
+          FRONTEND_ECR_REPOSITORY_URL: ${{ steps.tf_outputs.outputs.frontend_ecr_url }}
+          BACKEND_ECR_REPOSITORY_URL: ${{ steps.tf_outputs.outputs.backend_ecr_url }}
+          BACKEND_IRSA_ROLE_ARN: ${{ steps.tf_outputs.outputs.backend_irsa_role_arn }}
+          DB_SECRET_NAME: ${{ steps.tf_outputs.outputs.db_secret_name }}
+        run: |
+          mkdir -p rendered
+          for f in "${{ env.K8S_DIR }}"/*.yaml; do
+            envsubst < "$f" > "rendered/$(basename "$f")"
+          done
+
+      - name: kubectl apply
+        run: kubectl apply -f rendered/

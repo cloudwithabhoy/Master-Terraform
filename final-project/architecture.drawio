@@ -1,0 +1,154 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram name="Final Project - AWS Architecture" id="final-project-architecture">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ============ Outside AWS: users ============ -->
+        <mxCell id="n_user" value="End User&lt;br&gt;(browser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="260" y="20" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="n_operator" value="Operator&lt;br&gt;(SSH, allow-listed IP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="20" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="n_internet" value="Internet" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="700" y="110" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============ VPC container ============ -->
+        <mxCell id="n_vpc" value="VPC — 10.0.0.0/16  (us-east-1)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#232F3E;dashed=1;verticalAlign=top;align=left;fontSize=16;fontStyle=1;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="1420" height="710" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_igw" value="Internet Gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_alb" value="Application Load Balancer (ALB)&lt;br&gt;HTTP :80 — spans both public subnets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="320" width="340" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Public Subnet AZ-a ============ -->
+        <mxCell id="n_pubA" value="Public Subnet AZ-a — 10.0.0.0/24" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="80" y="410" width="640" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="n_nat" value="NAT Gateway" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="120" y="460" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="n_bastion" value="Bastion EC2&lt;br&gt;sg-bastion: 22 from allow-listed IP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="340" y="460" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_alb_a_note" value="ALB ENI (AZ-a)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="540" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Public Subnet AZ-b ============ -->
+        <mxCell id="n_pubB" value="Public Subnet AZ-b — 10.0.1.0/24" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="760" y="410" width="640" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="n_alb_b_note" value="ALB ENI (AZ-b)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;dashed=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="800" y="460" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Private Subnet AZ-a ============ -->
+        <mxCell id="n_privA" value="Private Subnet AZ-a — 10.0.10.0/24" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="80" y="670" width="640" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="n_frontend" value="Frontend EC2&lt;br&gt;sg-frontend: from sg-alb" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="120" y="720" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_backend" value="Backend EC2&lt;br&gt;sg-backend: from sg-frontend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="720" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_rds" value="RDS PostgreSQL — Primary&lt;br&gt;sg-rds: from sg-backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="120" y="800" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Private Subnet AZ-b ============ -->
+        <mxCell id="n_privB" value="Private Subnet AZ-b — 10.0.11.0/24" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="760" y="670" width="640" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="n_rds_standby" value="RDS PostgreSQL — Standby&lt;br&gt;(Multi-AZ — prod only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="800" width="300" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Account-level services (outside VPC) ============ -->
+        <mxCell id="n_ecr" value="ECR&lt;br&gt;frontend + backend repos" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="410" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_secrets" value="Secrets Manager&lt;br&gt;DB credentials" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="510" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="n_iam" value="IAM Instance Profiles&lt;br&gt;frontend / backend / bastion" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="610" width="220" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Legend ============ -->
+        <mxCell id="n_legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;Blue = compute (EC2)&lt;br&gt;Green = data / networking gateway&lt;br&gt;Orange = load balancing / NAT&lt;br&gt;Red = account-level AWS services&lt;br&gt;Dashed = conditional (prod-only) or logical/via-NAT path" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="940" width="420" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- ============ Edges ============ -->
+        <mxCell id="e_user_internet" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_user" target="n_internet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_operator_internet" value="SSH" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_operator" target="n_internet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_internet_igw" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="n_internet" target="n_igw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_igw_alb" value="inbound :80" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_igw" target="n_alb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_alb_frontend" value="forward :8080" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_alb" target="n_frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_bastion_frontend" value="SSH hop" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_bastion" target="n_frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_bastion_backend" value="SSH hop" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_bastion" target="n_backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frontend_backend" value="app call :8080" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_frontend" target="n_backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_backend_rds" value=":5432" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_backend" target="n_rds">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rds_standby" value="sync replication (prod Multi-AZ only)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_rds" target="n_rds_standby">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nat_igw" value="NAT uplink" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="n_nat" target="n_igw">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frontend_nat" value="egress" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_frontend" target="n_nat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_backend_nat" value="egress" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_backend" target="n_nat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_frontend_ecr" value="pulls frontend image (via NAT)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_frontend" target="n_ecr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_backend_ecr" value="pulls backend image (via NAT)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_backend" target="n_ecr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_backend_secrets" value="reads DB creds (via NAT)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_backend" target="n_secrets">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_iam_frontend" value="attached role" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_iam" target="n_frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_iam_backend" value="attached role" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_iam" target="n_backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_iam_bastion" value="attached role" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=11;" edge="1" parent="1" source="n_iam" target="n_bastion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

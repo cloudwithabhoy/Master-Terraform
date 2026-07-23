@@ -1,0 +1,46 @@
+# =============================================================================
+# frontend-deployment.yaml  —  No ServiceAccount/IRSA here — the frontend
+# makes no AWS API calls of its own (only the backend needs Secrets Manager
+# read access; see final-project/PROJECT.md's "core resources").
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: default
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ${FRONTEND_ECR_REPOSITORY_URL}:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # Matches app/frontend/app.py's expected env var exactly. The
+            # backend Service's in-cluster DNS name ("backend", same
+            # namespace) is fully static — no Terraform output needed here,
+            # unlike the backend Deployment's placeholders.
+            - name: BACKEND_URL
+              value: "http://backend:8080"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

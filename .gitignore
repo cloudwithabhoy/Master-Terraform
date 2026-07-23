@@ -1,0 +1,43 @@
+# ===== Terraform =====
+# Local .terraform directories (providers, modules cached here)
+**/.terraform/*
+.terraform/
+
+# Dependency lock file — not committed in this repo (each learner runs their
+# own `terraform init`); note this differs from Terraform's own recommended
+# practice of committing it for reproducible provider versions.
+.terraform.lock.hcl
+
+# State files — NEVER commit these. They can contain secrets in plain text.
+*.tfstate
+*.tfstate.backup
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Variable files that may contain secrets.
+# We DO commit *.tfvars.example (safe templates), but never real ones.
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Override files are for local-only tweaks, keep them out of git.
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Lock file for the CLI config
+.terraformrc
+terraform.rc
+
+# ===== Secrets / credentials (belt and suspenders) =====
+*.pem
+.env
+.env.*
+aws-credentials*
+
+# ===== Editor / IDE =====
+.idea/

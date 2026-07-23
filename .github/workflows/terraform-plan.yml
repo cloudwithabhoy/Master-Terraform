@@ -1,0 +1,125 @@
+# =============================================================================
+# terraform-plan.yml  —  Runs `terraform plan` on every PR into `dev` and posts
+# the result as a PR comment, so a human reviews the plan BEFORE anything is
+# ever applied. This never touches real infrastructure — it's read-only.
+#
+# dev-only for now — qa/main get added once those environments exist
+# (see final-project/PROJECT.md, "The plan" phases 6-7).
+# =============================================================================
+
+name: Terraform Plan
+
+# --- Trigger: only PRs targeting `dev` that actually touch final-project/ ----
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "final-project/**"
+
+# --- Least-privilege token for this run (same instinct as Day 4's IAM) ------
+# The auto-generated GITHUB_TOKEN this job gets can read the repo and post PR
+#  - contents: read → lets Step 1 (checkout) clone the repo
+#  - pull-requests: write → lets Step 7 post the plan as a PR comment
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    # A fresh, disposable Ubuntu VM for this one run — thrown away afterward.
+    # No state or leftovers carry over from the previous run.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash # already the default on ubuntu-latest; pinned so a future runs-on change can't silently switch shells
+    env:
+      # Shortcut so the folder path isn't retyped in every step below.
+      TF_DIR: final-project/environments/dev
+    steps:
+      # --- Step 1: get the code onto the VM -------------------------------
+      # clones this repo onto the job's VM, at the exact commit the PR/push
+      #  represents. Without it, the VM has no files at all — every later step (init/validate/plan)
+      #  would fail immediately with nothing to work on.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Step 2: give Terraform something to talk to AWS with ----------
+      # `secrets.DEV_...` pulls an encrypted value from GitHub's secret
+      # store — never printed in logs, never in the code. Same purpose as
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4  # prebuilt action
+        with:
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # --- Step 3: install Terraform itself -------------------------------
+      # The VM doesn't have Terraform preinstalled — this downloads it, same
+      # as the install step you did by hand in Day 2.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: true
+
+      # --- Steps 4-6: the exact same init/validate/plan you already know -
+      # Nothing new here conceptually — it's the same workflow from every
+      # lab so far, just run by a machine instead of your terminal.
+      # -input=false: never pause waiting for a human to type an answer —
+      #   there's no one sitting at this VM to respond to a prompt.
+      - name: Terraform Init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform validate
+
+      # id: plan → lets later steps read steps.plan.outputs.stdout / .outcome
+      # working-directory → runs inside environments/dev, not the repo root
+      # -no-color → plain text, so it pastes cleanly into a PR comment
+      # continue-on-error → don't stop the job if plan fails; Step 7 still
+      #   posts the error as a comment, Step 8 fails the job afterward
+      # owner_tag has no default (Day 5's tagging convention) and dev.tfvars
+      # is gitignored — it never exists on this runner. Supplied here via a
+      # repository Variable (not a secret — not sensitive) instead: Settings
+      # -> Secrets and variables -> Actions -> Variables -> OWNER_TAG.
+      - name: Terraform Plan
+        id: plan
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform plan -input=false -no-color -var="owner_tag=${{ vars.OWNER_TAG }}"
+        continue-on-error: true
+
+      # --- Step 7: this is what makes it a REVIEW tool, not a black box ---
+      # actions/github-script → run real JS with an authenticated GitHub API
+      # client (`github`) and run context (`context`), instead of a shell cmd.
+      # ${{ steps.plan.outputs.stdout }} is substituted BEFORE the JS runs.
+      # issue_number: context.issue.number → PRs are issues internally, so PR
+      # comments go through the issues API.
+      # NOTE: posts a NEW comment every run, doesn't update an existing one —
+      # pushing again to the same PR stacks another comment below.
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan — \`dev\`
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      # --- Step 8: the safety net -----------------------------------------
+      # outcome vs conclusion: continue-on-error makes the step's reported
+      # CONCLUSION 'success' even on failure — but OUTCOME still holds the
+      # raw, real result. Checking outcome sees through that masking, and
+      # exit 1 fails this (last) step, so the whole job goes red for real.
+      - name: Fail job if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
