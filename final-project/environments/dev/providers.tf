@@ -43,6 +43,13 @@ provider "aws" {
   region = var.aws_region
 }
 
+/* =============================================================================
+   TEMPORARILY DISABLED — matches main.tf's incremental vpc+ecr-only rollout.
+   Uncomment together with module "eks" in main.tf; nothing here needs the
+   helm provider configured until that module (the only helm_release user)
+   is active again.
+   =============================================================================
+
 # --- Helm provider: configured to talk to THIS environment's EKS cluster ---
 # Needs the cluster to already exist to authenticate against it — a known
 # EKS+Terraform limitation. In practice this works in a single `terraform
@@ -62,3 +69,5 @@ provider "helm" {
     token                  = data.aws_eks_cluster_auth.this.token
   }
 }
+
+============================================================================= */
