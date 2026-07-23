@@ -1,0 +1,11 @@
+# =============================================================================
+# dev.tfvars.example  —  Copy this to dev.tfvars (gitignored — see the repo's
+# root .gitignore) and fill in your own values.
+#
+# Much shorter than before the EKS pivot — key_name/allowed_ssh_cidr are gone
+# (no more bastion; see final-project/PROJECT.md's "Architecture decisions").
+# Only owner_tag actually requires a real value; everything else already has
+# a sensible default in variables.tf.
+# =============================================================================
+
+owner_tag = "your-name-here"

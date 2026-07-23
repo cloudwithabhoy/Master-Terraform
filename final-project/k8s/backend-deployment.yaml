@@ -1,0 +1,60 @@
+# =============================================================================
+# backend-deployment.yaml  —  The backend's ServiceAccount (IRSA-annotated,
+# so its pods can read the RDS secret from Secrets Manager with no
+# hardcoded/plain-text credentials — see modules/eks/main.tf's backend IRSA
+# role) and Deployment. See k8s/README.md for the ${...} placeholder
+# substitution this file depends on.
+# =============================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend
+  namespace: default
+  annotations:
+    # Must match modules/eks's backend_service_account_name/backend_namespace
+    # defaults exactly ("backend" / "default") — IRSA's trust policy is
+    # scoped to that specific namespace:serviceaccount pair.
+    eks.amazonaws.com/role-arn: ${BACKEND_IRSA_ROLE_ARN}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: backend
+      containers:
+        - name: backend
+          image: ${BACKEND_ECR_REPOSITORY_URL}:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # Matches app/backend/app.py's expected env vars exactly — same
+            # names it read from EC2 user_data before this pivot.
+            - name: DB_SECRET_NAME
+              value: "${DB_SECRET_NAME}"
+            - name: AWS_REGION
+              value: "${AWS_REGION}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

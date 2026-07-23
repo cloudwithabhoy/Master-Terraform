@@ -1,0 +1,33 @@
+# =============================================================================
+# ingress.yaml  —  The public entry point. modules/eks installs the AWS Load
+# Balancer Controller as cluster infrastructure; THIS object is what makes it
+# actually provision an ALB — Terraform never creates the ALB directly (see
+# final-project/PROJECT.md's "Architecture decisions").
+#
+# target-type: ip (not the default "instance") routes the ALB straight to
+# pod IPs via the VPC CNI, rather than to node ports — the modern,
+# recommended mode for pod-based workloads.
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    # HTTP only — no domain registered, no ACM cert (same decision as the
+    # earlier EC2-era ALB module; see final-project/PROJECT.md).
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080

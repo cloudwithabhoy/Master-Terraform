@@ -1,0 +1,61 @@
+# =============================================================================
+# terraform-apply.yml  —  Runs `terraform apply` on every merge (push) to
+# `dev`. This is the ONLY place any environment's infrastructure actually
+# gets applied — never a laptop (see final-project/PROJECT.md's "Rule" at
+# the top of "The plan").
+#
+# dev-only for now — qa/main get added once those environments exist
+# (see final-project/PROJECT.md, "The plan" phases 6-7). At that point qa/
+# prod's jobs will reference their own GitHub Environment with a
+# required-reviewer rule attached — "dev" has none, so this auto-applies.
+# =============================================================================
+
+name: Terraform Apply
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "final-project/**"
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    # Declaring `environment: dev` here (even with no required-reviewer rule
+    # attached to it) is deliberate, not incidental — it's what scopes this
+    # job to the "dev" GitHub Environment's OWN secrets below, separate from
+    # the DEV_-prefixed repo secrets terraform-plan.yml uses. See the
+    # "Plan creds" vs "Environment secrets" split decided earlier: plan
+    # can't use a gated Environment (you'd be blocked from ever seeing the
+    # plan before approving), but apply — which actually mutates real
+    # infrastructure — both can and should.
+    environment: dev
+    defaults:
+      run:
+        shell: bash
+    env:
+      TF_DIR: final-project/environments/dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false -auto-approve

@@ -1,0 +1,17 @@
+# =============================================================================
+# frontend-service.yaml  —  In-cluster ClusterIP Service — this is what
+# ingress.yaml's backend actually points at. Still never directly internet-
+# facing; the ALB is what's public, not this Service.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - port: 8080
+      targetPort: 8080
