@@ -13,5 +13,8 @@ locals {
     Owner       = var.owner_tag
     Component   = "final-project"
     Course      = "Master Terraform"
+    # Common real-world tag: tells anyone looking in the AWS Console this
+    # resource is IaC-managed and shouldn't be hand-edited there.
+    ManagedBy   = "terraform"
   }
 }
